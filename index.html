@@ -26,6 +26,9 @@
 
                 const upload = new tus.Upload(file, {
                     endpoint: "/tusd/",
+                    headers: {
+                        Authorization: "{{.Auth}}",
+                    },
                     metadata: {
                         filename: file.name,
                         filetype: file.type,
@@ -46,7 +49,9 @@
             };
 
             const deleteFile = async (name) => {
-                await fetch(`files/${name}`, { method: "DELETE" });
+                await fetch(`files/${name}?auth={{.Auth}}`, {
+                    method: "DELETE",
+                });
                 location.reload();
             };
         </script>

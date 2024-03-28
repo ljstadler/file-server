@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -85,7 +84,7 @@ func main() {
 
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			if c.QueryParam("auth") == MANAGE_TOKEN || strings.HasSuffix(c.Request().Referer(), MANAGE_TOKEN) {
+			if c.QueryParam("auth") == MANAGE_TOKEN || c.Request().Header.Get("Authorization") == MANAGE_TOKEN {
 				c.Set("perm", "manage")
 				return next(c)
 			} else if c.QueryParam("auth") == VIEW_TOKEN {
