@@ -1,15 +1,16 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"io"
 	"log"
-	"math"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
+	"github.com/docker/go-units"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/tus/tusd/v2/pkg/filestore"
@@ -17,9 +18,9 @@ import (
 )
 
 type File struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Size string `json:"size"`
+	Name     string `json:"name"`
+	Size     string `json:"size"`
+	Modified string `json:"modified"`
 }
 
 type Data struct {
@@ -96,7 +97,9 @@ func main() {
 		}
 	})
 
-	e.GET("/files", func(c echo.Context) error {
+	e.File("/favicon.ico", "favicon.ico")
+
+	e.GET("/", func(c echo.Context) error {
 		data := Data{
 			Auth:  c.QueryParam("auth"),
 			Perm:  c.Get("perm").(string),
@@ -105,8 +108,9 @@ func main() {
 		if err := filepath.Walk("files", func(path string, info os.FileInfo, err error) error {
 			if !info.IsDir() {
 				data.Files = append(data.Files, File{
-					Name: info.Name(),
-					Size: fmt.Sprintf("%.2f", float64(info.Size())/math.Pow(1024, 2)),
+					Name:     info.Name(),
+					Size:     units.HumanSize(float64(info.Size())),
+					Modified: units.HumanDuration(time.Since(info.ModTime())) + " ago",
 				})
 			}
 			if err != nil {
@@ -118,18 +122,22 @@ func main() {
 			log.Println(err)
 			return err
 		}
-		return c.Render(http.StatusOK, "index.html", data)
+		if c.Request().Header.Get("Accept") == "application/json" {
+			return c.JSON(http.StatusOK, data.Files)
+		} else {
+			return c.Render(http.StatusOK, "index.html", data)
+		}
 	})
 
-	e.GET("/files/:name", func(c echo.Context) error {
+	e.GET("/file/:name", func(c echo.Context) error {
 		return c.File("files/" + c.Param("name"))
 	})
 
-	e.DELETE("/files/:name", func(c echo.Context) error {
+	e.DELETE("/file/:name", func(c echo.Context) error {
 		if c.Get("perm") == "view" {
 			return c.NoContent(http.StatusForbidden)
 		}
-		if err := os.Remove("files/" + c.Param("name")); err != nil {
+		if err := os.Remove("files/" + strings.ReplaceAll(c.Param("name"), "%20", " ")); err != nil {
 			log.Println(err)
 			return err
 		}

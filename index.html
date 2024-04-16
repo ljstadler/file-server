@@ -8,8 +8,13 @@
             content="upgrade-insecure-requests"
         />
         <link
+            rel="icon"
+            type="image/x-icon"
+            href="favicon.ico?auth={{.Auth}}"
+        />
+        <link
             rel="stylesheet"
-            href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+            href="https://cdn.jsdelivr.net/npm/@picocss/pico@latest/css/pico.min.css"
         />
         {{if (eq .Perm "manage")}}
         <script src="https://cdn.jsdelivr.net/npm/tus-js-client@latest/dist/tus.min.js"></script>
@@ -49,7 +54,7 @@
             };
 
             const deleteFile = async (name) => {
-                await fetch(`files/${name}?auth={{.Auth}}`, {
+                await fetch(`file/${name}?auth={{.Auth}}`, {
                     method: "DELETE",
                 });
                 location.reload();
@@ -73,6 +78,7 @@
                     <tr>
                         <th scope="col">Name</th>
                         <th scope="col">Size</th>
+                        <th scope="col">Modified</th>
                         <th scope="col">Download</th>
                         {{if (eq .Perm "manage")}}
                         <th scope="col">Delete</th>
@@ -84,8 +90,9 @@
                     <tr>
                         <th scope="row">{{.Name}}</th>
                         <td>{{.Size}}</td>
+                        <td>{{.Modified}}</td>
                         <td>
-                            <a href="files/{{.Name}}?auth={{$.Auth}}" download
+                            <a href="file/{{.Name}}?auth={{$.Auth}}" download
                                 >Download
                             </a>
                         </td>
