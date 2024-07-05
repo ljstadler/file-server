@@ -36,3 +36,8 @@ jobs:
                   platforms: linux/amd64,linux/arm64
                   push: true
                   tags: ghcr.io/${{ github.repository }}:latest
+
+            - name: ghcr.io cleanup
+              uses: dataaxiom/ghcr-cleanup-action@v1
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
