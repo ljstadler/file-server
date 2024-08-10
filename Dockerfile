@@ -1,18 +1,18 @@
-FROM golang:alpine as build
+FROM golang:latest AS build
 
-WORKDIR /build
+WORKDIR /file-server
 
-COPY . .
+COPY go.mod go.sum main.go ./
 
-RUN CGO_ENABLED=0 go build -ldflags="-w -s"
+RUN mkdir files && CGO_ENABLED=0 go build -ldflags="-w -s"
 
-FROM scratch
+FROM gcr.io/distroless/static:nonroot
 
-COPY --from=build build/file-server file-server
+WORKDIR /file-server
 
-COPY --from=build build/favicon.ico favicon.ico
-
-COPY --from=build build/index.html index.html
+COPY --from=build --chown=nonroot file-server/files files
+COPY --from=build file-server/file-server file-server
+COPY favicon.ico index.html ./
 
 EXPOSE 1323
 
