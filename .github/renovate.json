@@ -4,5 +4,11 @@
     "dependencyDashboard": false,
     "automerge": true,
     "automergeType": "branch",
-    "ignoreTests": true
+    "ignoreTests": true,
+    "packageRules": [
+        {
+            "matchDatasources": ["golang-version"],
+            "rangeStrategy": "bump"
+        }
+    ]
 }
