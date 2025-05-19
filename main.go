@@ -88,7 +88,7 @@ func main() {
 			if c.QueryParam("auth") == MANAGE_TOKEN || c.Request().Header.Get("Authorization") == MANAGE_TOKEN {
 				c.Set("perm", "manage")
 				return next(c)
-			} else if c.QueryParam("auth") == VIEW_TOKEN {
+			} else if c.QueryParam("auth") == VIEW_TOKEN && c.Request().Method == "GET" {
 				c.Set("perm", "view")
 				return next(c)
 			} else {
@@ -134,14 +134,11 @@ func main() {
 	})
 
 	e.DELETE("/file/:name", func(c echo.Context) error {
-		if c.Get("perm") == "view" {
-			return c.NoContent(http.StatusForbidden)
-		}
 		if err := os.Remove("files/" + strings.ReplaceAll(c.Param("name"), "%20", " ")); err != nil {
 			log.Println(err)
 			return err
 		}
-		return c.NoContent(http.StatusOK)
+		return c.NoContent(http.StatusNoContent)
 	})
 
 	e.Any("/tusd/*", echo.WrapHandler(http.StripPrefix("/tusd/", tusdHandler)))

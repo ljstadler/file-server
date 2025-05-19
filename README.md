@@ -1,10 +1,6 @@
-<div align=center>
-
 # file-server
 
 ## HTTP/TUS file server
-
-</div>
 
 ## Usage
 

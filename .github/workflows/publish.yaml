@@ -1,4 +1,4 @@
-name: publish
+name: Publish
 
 on:
     push:
@@ -38,6 +38,7 @@ jobs:
                   file: ./Dockerfile
                   platforms: linux/amd64,linux/arm64
                   push: true
+                  provenance: false
                   tags: ghcr.io/${{ github.repository }}:latest
 
             - name: ghcr.io cleanup
