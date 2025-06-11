@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+            http-equiv="Content-Security-Policy"
+            content="upgrade-insecure-requests"
+        />
+        <link
+            rel="icon"
+            type="image/x-icon"
+            href="favicon.ico?auth={{.Auth}}"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/@picocss/pico@latest/css/pico.min.css"
+        />
+        {{if (eq .Perm "manage")}}
+        <script src="https://cdn.jsdelivr.net/npm/tus-js-client@latest/dist/tus.min.js"></script>
+        <script>
+            const uploadFile = (event) => {
+                event.preventDefault();
+
+                const form = document.getElementById("form");
+                const file = document.getElementById("file").files[0];
+
+                const progress = document.createElement("progress");
+                progress.max = 100;
+                progress.value = 0;
+
+                const upload = new tus.Upload(file, {
+                    endpoint: "/tusd/",
+                    headers: {
+                        Authorization: "{{.Auth}}",
+                    },
+                    metadata: {
+                        filename: file.name,
+                        filetype: file.type,
+                    },
+                    onProgress: (bytesUploaded, bytesTotal) => {
+                        progress.value = (
+                            (bytesUploaded / bytesTotal) *
+                            100
+                        ).toFixed(2);
+                    },
+                    onSuccess: () => location.reload(),
+                    onError: (error) => console.error(error),
+                });
+
+                form.replaceWith(progress);
+
+                upload.start();
+            };
+
+            const deleteFile = async (name) => {
+                await fetch(`file/${name}?auth={{.Auth}}`, {
+                    method: "DELETE",
+                });
+                location.reload();
+            };
+        </script>
+        {{end}}
+        <title>File Server</title>
+    </head>
+    <body>
+        <main class="container">
+            {{if (eq .Perm "manage")}}
+            <form id="form" onsubmit="uploadFile(event)">
+                <fieldset role="group">
+                    <input id="file" name="file" type="file" />
+                    <input type="submit" value="Upload" />
+                </fieldset>
+            </form>
+            {{end}}
+            <div class="overflow-auto">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Name</th>
+                            <th scope="col">Size</th>
+                            <th scope="col">Modified</th>
+                            <th scope="col">Download</th>
+                            {{if (eq .Perm "manage")}}
+                            <th scope="col">Delete</th>
+                            {{end}}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Files}}
+                        <tr>
+                            <th scope="row">{{.Name}}</th>
+                            <td>{{.Size}}</td>
+                            <td>{{.Modified}}</td>
+                            <td>
+                                <a
+                                    href="file/{{.Name}}?auth={{$.Auth}}"
+                                    download
+                                    >Download
+                                </a>
+                            </td>
+                            {{if (eq $.Perm "manage")}}
+                            <td>
+                                <a
+                                    id="{{.Name}}"
+                                    style="cursor: pointer"
+                                    onclick="deleteFile(this.id)"
+                                    >Delete</a
+                                >
+                            </td>
+                            {{end}}
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </body>
+</html>

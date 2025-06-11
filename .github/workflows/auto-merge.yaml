@@ -1,0 +1,31 @@
+name: Dependabot auto-merge
+
+on: pull_request
+
+permissions:
+    contents: write
+    pull-requests: write
+
+jobs:
+    check:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Set up Go
+              uses: actions/setup-go@v5
+
+            - name: Check
+              run: go vet
+
+    auto-merge:
+        needs: check
+        runs-on: ubuntu-latest
+        if: github.event.pull_request.user.login == 'dependabot[bot]'
+        steps:
+            - name: Merge pull request
+              run: gh pr merge --auto --merge "$PR_URL"
+              env:
+                  PR_URL: ${{ github.event.pull_request.html_url }}
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
