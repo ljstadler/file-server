@@ -2,6 +2,14 @@ name: Publish
 
 on:
     workflow_dispatch:
+    push:
+        paths:
+            - Dockerfile
+            - favicon.ico
+            - go.mod
+            - go.sum
+            - index.html
+            - main.go
 
 jobs:
     build-and-push-image:

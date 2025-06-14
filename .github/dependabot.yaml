@@ -1,9 +1,11 @@
 version: 2
+
 updates:
     - package-ecosystem: "github-actions"
       directory: "/"
       schedule:
-          interval: "weekly"
+          interval: "monthly"
+          time: "00:00"
       groups:
           actions-dependencies:
               patterns:
@@ -13,6 +15,7 @@ updates:
       directory: "/"
       schedule:
           interval: "weekly"
+          time: "00:00"
       groups:
           dependencies:
               patterns:
