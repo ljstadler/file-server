@@ -4,7 +4,7 @@ go 1.24.4
 
 require (
 	github.com/docker/go-units v0.5.0
-	github.com/labstack/echo/v4 v4.14.0
+	github.com/labstack/echo/v4 v4.15.0
 	github.com/tus/tusd/v2 v2.8.0
 )
 
