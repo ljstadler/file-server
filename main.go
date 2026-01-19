@@ -12,6 +12,7 @@ import (
 	"github.com/docker/go-units"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
+	"github.com/tus/tusd/v2/pkg/filelocker"
 	"github.com/tus/tusd/v2/pkg/filestore"
 	tusd "github.com/tus/tusd/v2/pkg/handler"
 )
@@ -36,11 +37,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	store := filestore.FileStore{
-		Path: "files",
-	}
+	store := filestore.New("files")
+	locker := filelocker.New("files")
 	composer := tusd.NewStoreComposer()
 	store.UseIn(composer)
+	locker.UseIn(composer)
 
 	tusdHandler, err := tusd.NewHandler(tusd.Config{
 		BasePath:              "/tusd/",
