@@ -2,7 +2,6 @@ package main
 
 import (
 	"html/template"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -11,8 +10,8 @@ import (
 	"time"
 
 	"github.com/docker/go-units"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
 	"github.com/tus/tusd/v2/pkg/filestore"
 	tusd "github.com/tus/tusd/v2/pkg/handler"
 )
@@ -27,14 +26,6 @@ type Data struct {
 	Auth  string
 	Perm  string
 	Files []File
-}
-
-type Template struct {
-	templates *template.Template
-}
-
-func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	return t.templates.ExecuteTemplate(w, name, data)
 }
 
 func main() {
@@ -73,18 +64,16 @@ func main() {
 		}
 	}()
 
-	t := &Template{
-		templates: template.Must(template.ParseGlob("index.html")),
-	}
-
 	e := echo.New()
 
-	e.Renderer = t
+	e.Renderer = &echo.TemplateRenderer{
+		Template: template.Must(template.ParseGlob("index.html")),
+	}
 
-	e.Use(middleware.CORS())
+	e.Use(middleware.CORS("*"))
 
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			if c.QueryParam("auth") == MANAGE_TOKEN || c.Request().Header.Get("Authorization") == MANAGE_TOKEN {
 				c.Set("perm", "manage")
 				return next(c)
@@ -99,7 +88,7 @@ func main() {
 
 	e.File("/favicon.ico", "favicon.ico")
 
-	e.GET("/", func(c echo.Context) error {
+	e.GET("/", func(c *echo.Context) error {
 		data := Data{
 			Auth:  c.QueryParam("auth"),
 			Perm:  c.Get("perm").(string),
@@ -129,11 +118,11 @@ func main() {
 		}
 	})
 
-	e.GET("/file/:name", func(c echo.Context) error {
+	e.GET("/file/:name", func(c *echo.Context) error {
 		return c.File("files/" + c.Param("name"))
 	})
 
-	e.DELETE("/file/:name", func(c echo.Context) error {
+	e.DELETE("/file/:name", func(c *echo.Context) error {
 		if err := os.Remove("files/" + strings.ReplaceAll(c.Param("name"), "%20", " ")); err != nil {
 			log.Println(err)
 			return err
@@ -143,5 +132,7 @@ func main() {
 
 	e.Any("/tusd/*", echo.WrapHandler(http.StripPrefix("/tusd/", tusdHandler)))
 
-	e.Logger.Fatal(e.Start(":1323"))
+	if err := e.Start(":1323"); err != nil {
+		e.Logger.Error("failed to start server", "error", err)
+	}
 }
