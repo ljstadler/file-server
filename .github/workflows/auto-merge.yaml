@@ -8,21 +8,39 @@ permissions:
 
 jobs:
     check:
+        if: github.event.pull_request.user.login == 'dependabot[bot]'
+
         runs-on: ubuntu-latest
+
         steps:
             - name: Checkout
               uses: actions/checkout@v6
 
-            - name: Set up Go
-              uses: actions/setup-go@v6
+            - name: Metadata
+              id: metadata
+              uses: dependabot/fetch-metadata@v2
 
-            - name: Check
+            - name: Check actions-dependencies
+              if: steps.metadata.outputs.dependency-group == 'actions-dependencies'
+              run: |
+                  bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+                  ./actionlint -color
+
+            - name: Set up Go
+              if: steps.metadata.outputs.dependency-group == 'dependencies'
+              uses: actions/setup-go@v6
+              with:
+                  go-version-file: "go.mod"
+
+            - name: Check dependencies
+              if: steps.metadata.outputs.dependency-group == 'dependencies'
               run: go vet
 
     auto-merge:
         needs: check
+
         runs-on: ubuntu-latest
-        if: github.event.pull_request.user.login == 'dependabot[bot]'
+
         steps:
             - name: Merge pull request
               run: gh pr merge --auto --squash "$PR_URL"

@@ -1,6 +1,6 @@
 module file-server
 
-go 1.25.0
+go 1.25.6
 
 require (
 	github.com/docker/go-units v0.5.0
